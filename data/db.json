@@ -1,0 +1,134 @@
+{
+  "admin_users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "email": "admin@portfolio.com"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "Plateforme d'Inscription Étudiant",
+      "description": "Développement d'un site permettant l'inscription et la gestion des étudiants. Comprend un formulaire sécurisé, un CRUD complet et un dashboard admin.",
+      "technologies": [
+        "PHP",
+        "MySQL",
+        "HTML",
+        "CSS",
+        "JS"
+      ],
+      "category": "web",
+      "image_url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80",
+      "github_link": null
+    },
+    {
+      "id": 2,
+      "title": "Application de Gestion Scolaire",
+      "description": "Développement d'une application mobile pour la gestion scolaire native. Intégration en temps réel des données académiques.",
+      "technologies": [
+        "XML",
+        "JAVA",
+        "FIREBASE"
+      ],
+      "category": "software",
+      "image_url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80",
+      "github_link": "https://github.com/laajaj0/AppEcig"
+    }
+  ],
+  "education": [
+    {
+      "id": 1,
+      "school": "IBN TOFAIL KENITRA",
+      "degree": "Licence Création du Contenu Numérique",
+      "year": "2024 – 2025",
+      "display_order": 1
+    },
+    {
+      "id": 2,
+      "school": "ISTA Sidi Kacem",
+      "degree": "Développement Digital",
+      "year": "2022 – 2024",
+      "display_order": 2
+    },
+    {
+      "id": 3,
+      "school": "LYCEE LOUIS LE CHATELIER SIDI SLIMANE",
+      "degree": "Baccalauréat Science Mathématique",
+      "year": "2019 – 2020",
+      "display_order": 3
+    }
+  ],
+  "experiences": [
+    {
+      "id": 1,
+      "company": "ECIG (École Centrale d'Informatique et de Gestion)",
+      "role": "Stagiaire Développeur",
+      "period": "10/03/2024 – 20/04/2024",
+      "description": [
+        "Développement de modules internes",
+        "Assistance technique et maintenance informatique"
+      ],
+      "display_order": 1
+    }
+  ],
+  "messages": [],
+  "languages": [
+    {
+      "id": 1,
+      "name": "Arabe",
+      "level": "Langue maternelle",
+      "display_order": 1
+    },
+    {
+      "id": 2,
+      "name": "Français",
+      "level": "Bon niveau",
+      "display_order": 2
+    },
+    {
+      "id": 3,
+      "name": "Anglais",
+      "level": "Intermédiaire",
+      "display_order": 3
+    }
+  ],
+  "interests": [
+    {
+      "id": 1,
+      "name": "Voyage",
+      "display_order": 1
+    },
+    {
+      "id": 2,
+      "name": "Musique",
+      "display_order": 2
+    },
+    {
+      "id": 3,
+      "name": "Sport",
+      "display_order": 3
+    },
+    {
+      "id": 4,
+      "name": "Jeux vidéo",
+      "display_order": 4
+    }
+  ],
+  "skills": [
+    {
+      "id": 1,
+      "name": "Test Skill",
+      "level": 50,
+      "category": "other"
+    }
+  ],
+  "profile": {
+    "name": "Ahmed Al Ghazaly",
+    "title": "Développeur Informatique",
+    "subtitle": "Développeur informatique spécialisé en développement web et applications mobiles avec une forte capacité d'analyse et de conception de solutions digitales fiables, performantes et évolutives.",
+    "status": "Disponible pour nouveaux projets",
+    "image_url": null
+  }
+}
