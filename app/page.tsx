@@ -28,6 +28,14 @@ import { PROJECTS, SKILLS, EXPERIENCES, EDUCATION, LANGUAGES, INTERESTS } from '
 import AdminDashboard from '@/components/AdminDashboard';
 import LoginPage from '@/components/LoginPage';
 
+interface ProfileData {
+  image_url?: string;
+  name?: string;
+  title?: string;
+  subtitle?: string;
+  status?: string;
+}
+
 export default function Home() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -47,7 +55,7 @@ export default function Home() {
   const formRef = useRef<HTMLFormElement>(null);
   const [isSending, setIsSending] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
-  const [profileData, setProfileData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
   useEffect(() => {
     fetch('/api/profile')

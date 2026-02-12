@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Github,
@@ -23,9 +22,10 @@ import {
   AlertCircle,
   Lock
 } from 'lucide-react';
-import { PROJECTS, SKILLS, EXPERIENCES, EDUCATION, LANGUAGES, INTERESTS } from './constants';
-import AdminDashboard from './AdminDashboard';
-import LoginPage from './LoginPage';
+import { PROJECTS, SKILLS, EXPERIENCES, EDUCATION, LANGUAGES, INTERESTS } from './components/constants';
+import AdminDashboard from './components/AdminDashboard';
+import LoginPage from './components/LoginPage';
+import { Project, Experience, Education, Skill } from './components/types';
 
 const App: React.FC = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -378,7 +378,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="space-y-12">
-                {EXPERIENCES.map((exp, index) => (
+                {EXPERIENCES.map((exp: Experience, index: number) => (
                   <div key={index} className="relative pl-12 border-l-4 border-indigo-50 pb-2">
                     <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-indigo-600 -translate-x-1/2 border-8 border-white"></div>
                     <div className="bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 hover:shadow-2xl hover:bg-white transition-all group">
@@ -386,7 +386,7 @@ const App: React.FC = () => {
                       <h3 className="text-2xl font-black text-slate-900 mb-2">{exp.role}</h3>
                       <p className="text-slate-500 font-black mb-8 uppercase tracking-widest text-sm">{exp.company}</p>
                       <ul className="space-y-4">
-                        {exp.description.map((item, i) => (
+                        {exp.description.map((item: string, i: number) => (
                           <li key={i} className="flex items-start gap-4 text-slate-600 font-semibold leading-relaxed">
                             <span className="mt-2 w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>
                             {item}
@@ -409,7 +409,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                {EDUCATION.map((edu, index) => (
+                {EDUCATION.map((edu: Education, index: number) => (
                   <div key={index} className="group p-10 rounded-[2.5rem] border border-slate-100 bg-white hover:bg-emerald-50/20 transition-all flex gap-8 items-center border-b-4 border-b-transparent hover:border-b-emerald-600 shadow-sm">
                     <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center font-black text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
                       {edu.year.split(' – ')[0]?.trim().slice(-2) || edu.year.slice(-2)}
@@ -436,7 +436,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-2 max-w-5xl mx-auto gap-12">
-            {PROJECTS.map((project, index) => (
+            {PROJECTS.map((project: Project, index: number) => (
               <div key={index} className="bg-white rounded-[3rem] overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl transition-all group flex flex-col h-full">
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <img src={project.image} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
@@ -466,7 +466,7 @@ const App: React.FC = () => {
                     {project.description}
                   </p>
                   <div className="flex flex-wrap gap-2 pt-6 border-t border-slate-50">
-                    {project.technologies.map(tech => (
+                    {project.technologies.map((tech: string) => (
                       <span key={tech} className="px-4 py-1.5 bg-slate-50 text-slate-700 rounded-xl text-[10px] font-black border border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
                         {tech}
                       </span>
