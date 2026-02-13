@@ -54,6 +54,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [formData, setFormData] = useState<any>({});
   const [uploadingImage, setUploadingImage] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [dbStatus, setDbStatus] = useState<{ connected: boolean; message?: string }>({ connected: false });
+
+  useEffect(() => {
+    checkSystemStatus();
+  }, []);
+
+  const checkSystemStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/status');
+      const data = await res.json();
+      setDbStatus(data);
+    } catch (e) {
+      setDbStatus({ connected: false, message: 'API unreachable' });
+    }
+  };
+
 
   // Load data on tab change
   useEffect(() => {
@@ -397,7 +413,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       {/* Sidebar */}
       <div className="w-64 bg-slate-900 text-white flex flex-col shrink-0">
         <div className="p-8 border-b border-slate-800">
-          <h1 className="font-black text-xl tracking-tighter">ADMIN <span className="text-indigo-400">PANEL</span></h1>
+          <h1 className="font-black text-xl tracking-tighter flex items-center gap-2">
+            ADMIN <span className="text-indigo-400">PANEL</span>
+            <div className={`w-3 h-3 rounded-full ${dbStatus.connected ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-rose-500 animate-pulse'}`} title={dbStatus.connected ? 'Connecté à la BDD' : 'Déconnecté'}></div>
+          </h1>
+          {!dbStatus.connected && (
+            <p className="text-[10px] text-rose-400 mt-2 font-bold uppercase tracking-wider">
+              ⚠️ BDD Non Connectée
+            </p>
+          )}
         </div>
         <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
           <button
