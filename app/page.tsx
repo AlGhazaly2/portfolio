@@ -75,16 +75,20 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const [projectsRes, educationRes, experiencesRes, skillsRes, languagesRes, interestsRes] = await Promise.all([
-          fetch('/api/public/projects'),
-          fetch('/api/public/education'),
-          fetch('/api/public/experiences'),
-          fetch('/api/public/skills'),
-          fetch('/api/public/languages'),
-          fetch('/api/public/interests')
+          fetch(`/api/public/projects?t=${Date.now()}`),
+          fetch(`/api/public/education?t=${Date.now()}`),
+          fetch(`/api/public/experiences?t=${Date.now()}`),
+          fetch(`/api/public/skills?t=${Date.now()}`),
+          fetch(`/api/public/languages?t=${Date.now()}`),
+          fetch(`/api/public/interests?t=${Date.now()}`)
         ]);
 
         if (projectsRes.ok) {
           const projectsData = await projectsRes.json();
+          // Only update if array is not empty, otherwise keep default (or empty if intended)
+          // Actually, if we want dynamic, we should accept empty array if DB is empty.
+          // The issue was initial empty DB causing "disappearing" content.
+          // Now that init-db seeds content, we can trust the API.
           setProjects(projectsData);
         }
 
