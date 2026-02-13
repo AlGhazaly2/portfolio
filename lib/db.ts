@@ -1,126 +1,340 @@
-// Database using JSON file storage
-import fs from 'fs';
-import path from 'path';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+import { sql } from '@vercel/postgres';
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure the connection is cached if needed, but Vercel handles this well.
+
+// --- Profile ---
+export async function getProfile() {
+    try {
+        const { rows } = await sql`SELECT * FROM profile LIMIT 1`;
+        return rows[0] || {};
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to fetch profile data.');
+    }
 }
 
-// Initialize database if it doesn't exist
-if (!fs.existsSync(DB_FILE)) {
-    const initialData = {
-        admin_users: [
-            {
-                id: 1,
-                username: 'admin',
-                password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // admin123
-                email: 'admin@portfolio.com'
-            }
-        ],
-        projects: [
-            {
-                id: 1,
-                title: "Plateforme d'Inscription Étudiant",
-                description: "Développement d'un site permettant l'inscription et la gestion des étudiants. Comprend un formulaire sécurisé, un CRUD complet et un dashboard admin.",
-                technologies: ["PHP", "MySQL", "HTML", "CSS", "JS"],
-                category: "web",
-                image_url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80",
-                github_link: null
-            },
-            {
-                id: 2,
-                title: "Application de Gestion Scolaire",
-                description: "Développement d'une application mobile pour la gestion scolaire native. Intégration en temps réel des données académiques.",
-                technologies: ["XML", "JAVA", "FIREBASE"],
-                category: "software",
-                image_url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80",
-                github_link: "https://github.com/laajaj0/AppEcig"
-            }
-        ],
-        education: [
-            {
-                id: 1,
-                school: "IBN TOFAIL KENITRA",
-                degree: "Licence Création du Contenu Numérique",
-                year: "2024 – 2025",
-                display_order: 1
-            },
-            {
-                id: 2,
-                school: "ISTA Sidi Kacem",
-                degree: "Développement Digital",
-                year: "2022 – 2024",
-                display_order: 2
-            },
-            {
-                id: 3,
-                school: "LYCEE LOUIS LE CHATELIER SIDI SLIMANE",
-                degree: "Baccalauréat Science Mathématique",
-                year: "2019 – 2020",
-                display_order: 3
-            }
-        ],
-        experiences: [
-            {
-                id: 1,
-                company: "ECIG (École Centrale d'Informatique et de Gestion)",
-                role: "Stagiaire Développeur",
-                period: "10/03/2024 – 20/04/2024",
-                description: ["Développement de modules internes", "Assistance technique et maintenance informatique"],
-                display_order: 1
-            }
-        ],
-        messages: [],
-        skills: [
-            { id: 1, name: "HTML / CSS", level: 95, category: "frontend" },
-            { id: 2, name: "JavaScript", level: 85, category: "frontend" },
-            { id: 3, name: "PHP", level: 85, category: "backend" },
-            { id: 4, name: "MySQL", level: 85, category: "backend" },
-            { id: 5, name: "Java", level: 80, category: "backend" },
-            { id: 6, name: "XML", level: 75, category: "other" },
-            { id: 7, name: "Bootstrap", level: 90, category: "frontend" },
-            { id: 8, name: "GitHub", level: 80, category: "tools" },
-            { id: 9, name: "VS Code", level: 90, category: "tools" },
-            { id: 10, name: "XAMPP", level: 85, category: "tools" },
-            { id: 11, name: "Word", level: 90, category: "other" },
-            { id: 12, name: "Excel", level: 85, category: "other" },
-            { id: 13, name: "PowerPoint", level: 85, category: "other" },
-            { id: 14, name: "Canva", level: 75, category: "other" }
-        ],
-        languages: [
-            { id: 1, name: "Arabe", level: "Langue maternelle", display_order: 1 },
-            { id: 2, name: "Français", level: "Bon niveau", display_order: 2 },
-            { id: 3, name: "Anglais", level: "Intermédiaire", display_order: 3 }
-        ],
-        interests: [
-            { id: 1, name: "Voyage", display_order: 1 },
-            { id: 2, name: "Musique", display_order: 2 },
-            { id: 3, name: "Sport", display_order: 3 },
-            { id: 4, name: "Jeux vidéo", display_order: 4 }
-        ]
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
+export async function updateProfile(data: any) {
+    try {
+        // Check if profile exists
+        const { rows } = await sql`SELECT id FROM profile LIMIT 1`;
+
+        if (rows.length === 0) {
+            await sql`
+        INSERT INTO profile (name, title, subtitle, status, image_url)
+        VALUES (${data.name}, ${data.title}, ${data.subtitle}, ${data.status}, ${data.image_url})
+      `;
+        } else {
+            await sql`
+        UPDATE profile 
+        SET name = ${data.name}, title = ${data.title}, subtitle = ${data.subtitle}, status = ${data.status}, image_url = ${data.image_url}
+        WHERE id = ${rows[0].id}
+      `;
+        }
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to update profile.');
+    }
 }
 
-// Read database
-export function readDB() {
-    const data = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(data);
+// --- Projects ---
+export async function getProjects() {
+    try {
+        const { rows } = await sql`SELECT * FROM projects ORDER BY created_at DESC`;
+        return rows;
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to fetch projects.');
+    }
 }
 
-// Write database
-export function writeDB(data: any) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+export async function addProject(data: any) {
+    try {
+        const technologies = Array.isArray(data.technologies) ? data.technologies : [];
+        await sql`
+      INSERT INTO projects (title, description, technologies, category, image_url, github_link)
+      VALUES (${data.title}, ${data.description}, ${technologies}, ${data.category}, ${data.image_url}, ${data.github_link})
+    `;
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to add project.');
+    }
 }
 
-// Get next ID for a table
-export function getNextId(table: string): number {
-    const db = readDB();
-    const items = db[table] || [];
-    if (items.length === 0) return 1;
-    return Math.max(...items.map((item: any) => item.id)) + 1;
+export async function updateProject(id: number, data: any) {
+    try {
+        const technologies = Array.isArray(data.technologies) ? data.technologies : [];
+        await sql`
+      UPDATE projects 
+      SET title = ${data.title}, description = ${data.description}, technologies = ${technologies}, category = ${data.category}, image_url = ${data.image_url}, github_link = ${data.github_link}
+      WHERE id = ${id}
+    `;
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to update project.');
+    }
+}
+
+export async function deleteProject(id: number) {
+    try {
+        await sql`DELETE FROM projects WHERE id = ${id}`;
+    } catch (error) {
+        console.error('Database Error:', error);
+        throw new Error('Failed to delete project.');
+    }
+}
+
+// --- Education ---
+export async function getEducation() {
+    try {
+        const { rows } = await sql`SELECT * FROM education ORDER BY display_order ASC, id DESC`;
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to fetch education.');
+    }
+}
+
+export async function addEducation(data: any) {
+    try {
+        await sql`
+      INSERT INTO education (school, degree, year, display_order)
+      VALUES (${data.school}, ${data.degree}, ${data.year}, ${data.display_order || 0})
+    `;
+    } catch (error) {
+        throw new Error('Failed to add education.');
+    }
+}
+
+export async function updateEducation(id: number, data: any) {
+    try {
+        await sql`
+      UPDATE education 
+      SET school = ${data.school}, degree = ${data.degree}, year = ${data.year}, display_order = ${data.display_order || 0}
+      WHERE id = ${id}
+    `;
+    } catch (error) {
+        throw new Error('Failed to update education.');
+    }
+}
+
+export async function deleteEducation(id: number) {
+    try {
+        await sql`DELETE FROM education WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to delete education.');
+    }
+}
+
+// --- Experiences ---
+export async function getExperiences() {
+    try {
+        const { rows } = await sql`SELECT * FROM experiences ORDER BY display_order ASC, id DESC`;
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to fetch experiences.');
+    }
+}
+
+export async function addExperience(data: any) {
+    try {
+        const description = Array.isArray(data.description) ? data.description : [];
+        await sql`
+      INSERT INTO experiences (company, role, period, description, display_order)
+      VALUES (${data.company}, ${data.role}, ${data.period}, ${description}, ${data.display_order || 0})
+    `;
+    } catch (error) {
+        throw new Error('Failed to add experience.');
+    }
+}
+
+export async function updateExperience(id: number, data: any) {
+    try {
+        const description = Array.isArray(data.description) ? data.description : [];
+        await sql`
+      UPDATE experiences 
+      SET company = ${data.company}, role = ${data.role}, period = ${data.period}, description = ${description}, display_order = ${data.display_order || 0}
+      WHERE id = ${id}
+    `;
+    } catch (error) {
+        throw new Error('Failed to update experience.');
+    }
+}
+
+export async function deleteExperience(id: number) {
+    try {
+        await sql`DELETE FROM experiences WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to delete experience.');
+    }
+}
+
+// --- Skills ---
+export async function getSkills() {
+    try {
+        const { rows } = await sql`SELECT * FROM skills ORDER BY id ASC`;
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to fetch skills.');
+    }
+}
+
+export async function addSkill(data: any) {
+    try {
+        await sql`
+      INSERT INTO skills (name, level, category)
+      VALUES (${data.name}, ${data.level || 50}, ${data.category})
+    `;
+    } catch (error) {
+        throw new Error('Failed to add skill.');
+    }
+}
+
+export async function updateSkill(id: number, data: any) {
+    try {
+        await sql`
+      UPDATE skills 
+      SET name = ${data.name}, level = ${data.level || 50}, category = ${data.category}
+      WHERE id = ${id}
+    `;
+    } catch (error) {
+        throw new Error('Failed to update skill.');
+    }
+}
+
+export async function deleteSkill(id: number) {
+    try {
+        await sql`DELETE FROM skills WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to delete skill.');
+    }
+}
+
+// --- Languages ---
+export async function getLanguages() {
+    try {
+        const { rows } = await sql`SELECT * FROM languages ORDER BY display_order ASC, id ASC`;
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to fetch languages.');
+    }
+}
+
+export async function addLanguage(data: any) {
+    try {
+        await sql`
+      INSERT INTO languages (name, level, display_order)
+      VALUES (${data.name}, ${data.level}, ${data.display_order || 0})
+    `;
+    } catch (error) {
+        throw new Error('Failed to add language.');
+    }
+}
+
+export async function updateLanguage(id: number, data: any) {
+    try {
+        await sql`
+      UPDATE languages 
+      SET name = ${data.name}, level = ${data.level}, display_order = ${data.display_order || 0}
+      WHERE id = ${id}
+    `;
+    } catch (error) {
+        throw new Error('Failed to update language.');
+    }
+}
+
+export async function deleteLanguage(id: number) {
+    try {
+        await sql`DELETE FROM languages WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to delete language.');
+    }
+}
+
+// --- Interests ---
+export async function getInterests() {
+    try {
+        const { rows } = await sql`SELECT * FROM interests ORDER BY display_order ASC, id ASC`;
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to fetch interests.');
+    }
+}
+
+export async function addInterest(data: any) {
+    try {
+        await sql`
+      INSERT INTO interests (name, display_order)
+      VALUES (${data.name}, ${data.display_order || 0})
+    `;
+    } catch (error) {
+        throw new Error('Failed to add interest.');
+    }
+}
+
+export async function updateInterest(id: number, data: any) {
+    try {
+        await sql`
+      UPDATE interests 
+      SET name = ${data.name}, display_order = ${data.display_order || 0}
+      WHERE id = ${id}
+    `;
+    } catch (error) {
+        throw new Error('Failed to update interest.');
+    }
+}
+
+export async function deleteInterest(id: number) {
+    try {
+        await sql`DELETE FROM interests WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to delete interest.');
+    }
+}
+
+// --- Messages ---
+export async function getMessages() {
+    try {
+        const { rows } = await sql`SELECT * FROM messages ORDER BY created_at DESC`;
+        return rows;
+    } catch (error) {
+        throw new Error('Failed to fetch messages.');
+    }
+}
+
+export async function addMessage(data: any) {
+    try {
+        await sql`
+      INSERT INTO messages (name, email, message)
+      VALUES (${data.name}, ${data.email}, ${data.message})
+    `;
+    } catch (error) {
+        throw new Error('Failed to add message.');
+    }
+}
+
+export async function deleteMessage(id: number) {
+    try {
+        await sql`DELETE FROM messages WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to delete message.');
+    }
+}
+
+export async function updateMessage(id: number, is_read: boolean) {
+    try {
+        await sql`UPDATE messages SET is_read = ${is_read} WHERE id = ${id}`;
+    } catch (error) {
+        throw new Error('Failed to update message.');
+    }
+}
+
+
+// --- Auth ---
+export async function getAdminUser(email: string) {
+    try {
+        const { rows } = await sql`SELECT * FROM admin_users WHERE email = ${email} LIMIT 1`;
+        return rows[0];
+    } catch (error) {
+        throw new Error('Failed to fetch user.');
+    }
 }

@@ -1,11 +1,15 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { readDB, writeDB, getNextId } from '@/lib/db';
+import { getExperiences, addExperience, updateExperience, deleteExperience } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const db = readDB();
-        return NextResponse.json(db.experiences || []);
+        const experiences = await getExperiences();
+        return NextResponse.json(experiences);
     } catch (error) {
+        console.error('Experiences fetch error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -13,26 +17,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json();
-        const db = readDB();
-
-        const newExperience = {
-            id: getNextId('experiences'),
-            company: data.company,
-            role: data.role,
-            period: data.period,
-            description: data.description || [],
-            display_order: data.display_order || 0
-        };
-
-        db.experiences.push(newExperience);
-        writeDB(db);
-
-        return NextResponse.json({
-            success: true,
-            message: 'Expérience ajoutée',
-            id: newExperience.id
-        });
+        await addExperience(data);
+        return NextResponse.json({ success: true, message: 'Expérience ajoutée' });
     } catch (error) {
+        console.error('Experience add error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -40,34 +28,12 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const data = await request.json();
+        if (!data.id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        if (!data.id) {
-            return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        }
-
-        const db = readDB();
-        const index = db.experiences.findIndex((e: any) => e.id === data.id);
-
-        if (index === -1) {
-            return NextResponse.json({ error: 'Experience not found' }, { status: 404 });
-        }
-
-        db.experiences[index] = {
-            ...db.experiences[index],
-            company: data.company,
-            role: data.role,
-            period: data.period,
-            description: data.description || [],
-            display_order: data.display_order || 0
-        };
-
-        writeDB(db);
-
-        return NextResponse.json({
-            success: true,
-            message: 'Expérience mise à jour'
-        });
+        await updateExperience(data.id, data);
+        return NextResponse.json({ success: true, message: 'Expérience mise à jour' });
     } catch (error) {
+        console.error('Experience update error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -76,20 +42,12 @@ export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const id = parseInt(searchParams.get('id') || '0');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        if (!id) {
-            return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        }
-
-        const db = readDB();
-        db.experiences = db.experiences.filter((e: any) => e.id !== id);
-        writeDB(db);
-
-        return NextResponse.json({
-            success: true,
-            message: 'Expérience supprimée'
-        });
+        await deleteExperience(id);
+        return NextResponse.json({ success: true, message: 'Expérience supprimée' });
     } catch (error) {
+        console.error('Experience delete error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

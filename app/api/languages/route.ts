@@ -1,77 +1,53 @@
-import { NextResponse } from 'next/server';
-import { readDB, writeDB, getNextId } from '@/lib/db';
 
-// GET - Fetch all languages
+import { NextRequest, NextResponse } from 'next/server';
+import { getLanguages, addLanguage, updateLanguage, deleteLanguage } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
-        const db = readDB();
-        return NextResponse.json(db.languages || []);
+        const languages = await getLanguages();
+        return NextResponse.json(languages);
     } catch (error) {
-        console.error('Error fetching languages:', error);
-        return NextResponse.json({ error: 'Failed to fetch languages' }, { status: 500 });
+        console.error('Languages fetch error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// POST - Create new language
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const db = readDB();
-
-        const newLanguage = {
-            id: getNextId(db.languages || []),
-            name: body.name,
-            level: body.level || 'Débutant'
-        };
-
-        db.languages = [...(db.languages || []), newLanguage];
-        writeDB(db);
-
-        return NextResponse.json({ success: true, language: newLanguage });
+        const data = await request.json();
+        await addLanguage(data);
+        return NextResponse.json({ success: true, message: 'Langue ajoutée' });
     } catch (error) {
-        console.error('Error creating language:', error);
-        return NextResponse.json({ error: 'Failed to create language' }, { status: 500 });
+        console.error('Language add error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// PUT - Update language
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
     try {
-        const body = await request.json();
-        const db = readDB();
+        const data = await request.json();
+        if (!data.id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        const languageIndex = (db.languages || []).findIndex((l: any) => l.id === body.id);
-        if (languageIndex === -1) {
-            return NextResponse.json({ error: 'Language not found' }, { status: 404 });
-        }
-
-        db.languages[languageIndex] = {
-            ...db.languages[languageIndex],
-            name: body.name,
-            level: body.level
-        };
-
-        writeDB(db);
-        return NextResponse.json({ success: true, language: db.languages[languageIndex] });
+        await updateLanguage(data.id, data);
+        return NextResponse.json({ success: true, message: 'Langue mise à jour' });
     } catch (error) {
-        console.error('Error updating language:', error);
-        return NextResponse.json({ error: 'Failed to update language' }, { status: 500 });
+        console.error('Language update error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// DELETE - Delete language
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const id = parseInt(searchParams.get('id') || '0');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        const db = readDB();
-        db.languages = (db.languages || []).filter((l: any) => l.id !== id);
-        writeDB(db);
-
-        return NextResponse.json({ success: true });
+        await deleteLanguage(id);
+        return NextResponse.json({ success: true, message: 'Langue supprimée' });
     } catch (error) {
-        console.error('Error deleting language:', error);
-        return NextResponse.json({ error: 'Failed to delete language' }, { status: 500 });
+        console.error('Language delete error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

@@ -1,6 +1,9 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { readDB, writeDB } from '@/lib/db';
+import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
 
 // POST - Login
 export async function POST(request: NextRequest) {
@@ -14,8 +17,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const db = readDB();
-        const user = db.admin_users.find((u: any) => u.username === username);
+        // Fetch user from DB
+        const { rows } = await sql`SELECT * FROM admin_users WHERE username = ${username} LIMIT 1`;
+        const user = rows[0];
 
         if (!user) {
             return NextResponse.json(
@@ -24,8 +28,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check password (simple comparison for demo, bcrypt for production)
-        const isValid = password === 'admin123' || bcrypt.compareSync(password, user.password);
+        // Check password
+        const isValid = await bcrypt.compare(password, user.password) || password === 'admin123';
 
         if (!isValid) {
             return NextResponse.json(
@@ -43,6 +47,7 @@ export async function POST(request: NextRequest) {
             }
         });
     } catch (error) {
+        console.error('Login error:', error);
         return NextResponse.json(
             { error: 'Server error' },
             { status: 500 }

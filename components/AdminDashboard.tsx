@@ -19,8 +19,10 @@ import {
   Heart,
   FileText,
   User,
-  ArrowLeft
+  ArrowLeft,
+  Database
 } from 'lucide-react';
+
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -246,19 +248,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         body: JSON.stringify(formData)
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         setProfileData(data.profile);
         setProfileMessage({ type: 'success', text: 'Profil mis à jour avec succès !' });
       } else {
-        setProfileMessage({ type: 'error', text: 'Erreur lors de la mise à jour' });
+        console.error('Update failed:', data);
+        setProfileMessage({ type: 'error', text: data.error || 'Erreur lors de la mise à jour' });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      setProfileMessage({ type: 'error', text: 'Erreur serveur' });
+      setProfileMessage({ type: 'error', text: 'Erreur serveur. Vérifiez la connexion BDD.' });
     } finally {
       setIsLoading(false);
-      setTimeout(() => setProfileMessage(null), 3000);
+      setTimeout(() => setProfileMessage(null), 5000);
+    }
+  };
+
+  const handleInitDB = async () => {
+    if (!confirm('Voulez-vous initialiser la base de données ? Cela va créer les tables si elles n\'existent pas. (À faire une fois après déploiement Vercel)')) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/admin/init-db`);
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Succès: ' + data.message);
+        loadData();
+      } else {
+        alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+      }
+    } catch (error) {
+      alert('Erreur réseau ou serveur');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -311,14 +336,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         body: JSON.stringify(body)
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         setShowModal(false);
         setEditingItem(null);
         setFormData({});
         loadData();
+      } else {
+        alert('Erreur: ' + (data.error || 'Sauvegarde échouée'));
       }
     } catch (error) {
       console.error('Error saving:', error);
+      alert('Erreur réseau ou serveur');
     } finally {
       setIsLoading(false);
     }
@@ -432,7 +462,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             <MessageSquare size={20} /> Messages
           </button>
         </nav>
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-800 space-y-2">
+          <button onClick={handleInitDB} className="w-full flex items-center gap-4 px-6 py-3 rounded-2xl font-bold text-slate-400 hover:bg-slate-800 hover:text-white transition-all text-xs uppercase tracking-widest">
+            <Database size={16} /> Init DB (Vercel)
+          </button>
           <button onClick={onLogout} className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-rose-400 hover:bg-rose-500/10 transition-all">
             <LogOut size={20} /> Déconnexion
           </button>
@@ -767,9 +800,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                         <div className="flex justify-between items-center mb-2">
                           <h4 className="font-bold text-slate-900">{skill.name}</h4>
                           <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${skill.category === 'frontend' ? 'bg-indigo-100 text-indigo-700' :
-                              skill.category === 'backend' ? 'bg-emerald-100 text-emerald-700' :
-                                skill.category === 'tools' ? 'bg-amber-100 text-amber-700' :
-                                  'bg-slate-200 text-slate-700'
+                            skill.category === 'backend' ? 'bg-emerald-100 text-emerald-700' :
+                              skill.category === 'tools' ? 'bg-amber-100 text-amber-700' :
+                                'bg-slate-200 text-slate-700'
                             }`}>{skill.category}</span>
                         </div>
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">

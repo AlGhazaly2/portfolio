@@ -1,13 +1,21 @@
+
 import { NextResponse } from 'next/server';
-import { readDB } from '@/lib/db';
+import { getProjects } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 // Public API for fetching projects (no auth required)
 export async function GET() {
     try {
-        const db = readDB();
+        const projects = await getProjects();
 
-        // Transform database format to match frontend types
-        const projects = (db.projects || []).map((project: any) => ({
+        // Transform database format to match frontend types if needed
+        // Note: Check if the fields match what the frontend expects.
+        // Frontend likely expects: title, description, technologies [], category, image, link
+        // DB has: title, description, technologies, category, image_url, github_link
+
+        const formattedProjects = projects.map((project: any) => ({
+            id: project.id,
             title: project.title,
             description: project.description,
             technologies: project.technologies || [],
@@ -16,7 +24,7 @@ export async function GET() {
             link: project.github_link || undefined
         }));
 
-        return NextResponse.json(projects);
+        return NextResponse.json(formattedProjects);
     } catch (error) {
         console.error('Error fetching public projects:', error);
         return NextResponse.json([], { status: 500 });

@@ -1,79 +1,53 @@
-import { NextResponse } from 'next/server';
-import { readDB, writeDB, getNextId } from '@/lib/db';
 
-// GET - Fetch all skills
+import { NextRequest, NextResponse } from 'next/server';
+import { getSkills, addSkill, updateSkill, deleteSkill } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
-        const db = readDB();
-        return NextResponse.json(db.skills || []);
+        const skills = await getSkills();
+        return NextResponse.json(skills);
     } catch (error) {
-        console.error('Error fetching skills:', error);
-        return NextResponse.json({ error: 'Failed to fetch skills' }, { status: 500 });
+        console.error('Skills fetch error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// POST - Create new skill
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const db = readDB();
-
-        const newSkill = {
-            id: getNextId(db.skills || []),
-            name: body.name,
-            level: body.level || 50,
-            category: body.category || 'other'
-        };
-
-        db.skills = [...(db.skills || []), newSkill];
-        writeDB(db);
-
-        return NextResponse.json({ success: true, skill: newSkill });
+        const data = await request.json();
+        await addSkill(data);
+        return NextResponse.json({ success: true, message: 'Compétence ajoutée' });
     } catch (error) {
-        console.error('Error creating skill:', error);
-        return NextResponse.json({ error: 'Failed to create skill' }, { status: 500 });
+        console.error('Skill add error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// PUT - Update skill
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
     try {
-        const body = await request.json();
-        const db = readDB();
+        const data = await request.json();
+        if (!data.id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        const skillIndex = (db.skills || []).findIndex((s: any) => s.id === body.id);
-        if (skillIndex === -1) {
-            return NextResponse.json({ error: 'Skill not found' }, { status: 404 });
-        }
-
-        db.skills[skillIndex] = {
-            ...db.skills[skillIndex],
-            name: body.name,
-            level: body.level,
-            category: body.category
-        };
-
-        writeDB(db);
-        return NextResponse.json({ success: true, skill: db.skills[skillIndex] });
+        await updateSkill(data.id, data);
+        return NextResponse.json({ success: true, message: 'Compétence mise à jour' });
     } catch (error) {
-        console.error('Error updating skill:', error);
-        return NextResponse.json({ error: 'Failed to update skill' }, { status: 500 });
+        console.error('Skill update error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// DELETE - Delete skill
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const id = parseInt(searchParams.get('id') || '0');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        const db = readDB();
-        db.skills = (db.skills || []).filter((s: any) => s.id !== id);
-        writeDB(db);
-
-        return NextResponse.json({ success: true });
+        await deleteSkill(id);
+        return NextResponse.json({ success: true, message: 'Compétence supprimée' });
     } catch (error) {
-        console.error('Error deleting skill:', error);
-        return NextResponse.json({ error: 'Failed to delete skill' }, { status: 500 });
+        console.error('Skill delete error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

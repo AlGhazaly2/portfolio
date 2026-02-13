@@ -1,75 +1,53 @@
-import { NextResponse } from 'next/server';
-import { readDB, writeDB, getNextId } from '@/lib/db';
 
-// GET - Fetch all interests
+import { NextRequest, NextResponse } from 'next/server';
+import { getInterests, addInterest, updateInterest, deleteInterest } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
-        const db = readDB();
-        return NextResponse.json(db.interests || []);
+        const interests = await getInterests();
+        return NextResponse.json(interests);
     } catch (error) {
-        console.error('Error fetching interests:', error);
-        return NextResponse.json({ error: 'Failed to fetch interests' }, { status: 500 });
+        console.error('Interests fetch error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// POST - Create new interest
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const db = readDB();
-
-        const newInterest = {
-            id: getNextId(db.interests || []),
-            name: body.name
-        };
-
-        db.interests = [...(db.interests || []), newInterest];
-        writeDB(db);
-
-        return NextResponse.json({ success: true, interest: newInterest });
+        const data = await request.json();
+        await addInterest(data);
+        return NextResponse.json({ success: true, message: 'Intérêt ajouté' });
     } catch (error) {
-        console.error('Error creating interest:', error);
-        return NextResponse.json({ error: 'Failed to create interest' }, { status: 500 });
+        console.error('Interest add error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// PUT - Update interest
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
     try {
-        const body = await request.json();
-        const db = readDB();
+        const data = await request.json();
+        if (!data.id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        const interestIndex = (db.interests || []).findIndex((i: any) => i.id === body.id);
-        if (interestIndex === -1) {
-            return NextResponse.json({ error: 'Interest not found' }, { status: 404 });
-        }
-
-        db.interests[interestIndex] = {
-            ...db.interests[interestIndex],
-            name: body.name
-        };
-
-        writeDB(db);
-        return NextResponse.json({ success: true, interest: db.interests[interestIndex] });
+        await updateInterest(data.id, data);
+        return NextResponse.json({ success: true, message: 'Intérêt mis à jour' });
     } catch (error) {
-        console.error('Error updating interest:', error);
-        return NextResponse.json({ error: 'Failed to update interest' }, { status: 500 });
+        console.error('Interest update error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// DELETE - Delete interest
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const id = parseInt(searchParams.get('id') || '0');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        const db = readDB();
-        db.interests = (db.interests || []).filter((i: any) => i.id !== id);
-        writeDB(db);
-
-        return NextResponse.json({ success: true });
+        await deleteInterest(id);
+        return NextResponse.json({ success: true, message: 'Intérêt supprimé' });
     } catch (error) {
-        console.error('Error deleting interest:', error);
-        return NextResponse.json({ error: 'Failed to delete interest' }, { status: 500 });
+        console.error('Interest delete error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

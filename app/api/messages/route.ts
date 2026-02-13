@@ -1,11 +1,15 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { readDB, writeDB, getNextId } from '@/lib/db';
+import { getMessages, addMessage, deleteMessage, updateMessage } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const db = readDB();
-        return NextResponse.json(db.messages || []);
+        const messages = await getMessages();
+        return NextResponse.json(messages);
     } catch (error) {
+        console.error('Messages fetch error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -13,26 +17,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json();
-        const db = readDB();
-
-        const newMessage = {
-            id: getNextId('messages'),
-            name: data.name,
-            email: data.email,
-            message: data.message,
-            is_read: false,
-            created_at: new Date().toISOString()
-        };
-
-        db.messages.push(newMessage);
-        writeDB(db);
-
-        return NextResponse.json({
-            success: true,
-            message: 'Message enregistré',
-            id: newMessage.id
-        });
+        // Here we could also send email via Resend/EmailJS logic if backend-side, 
+        // but frontend handles EmailJS. We just store it.
+        await addMessage(data);
+        return NextResponse.json({ success: true, message: 'Message enregistré' });
     } catch (error) {
+        console.error('Message add error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -40,26 +30,12 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const data = await request.json();
+        if (!data.id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        if (!data.id) {
-            return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        }
-
-        const db = readDB();
-        const index = db.messages.findIndex((m: any) => m.id === data.id);
-
-        if (index === -1) {
-            return NextResponse.json({ error: 'Message not found' }, { status: 404 });
-        }
-
-        db.messages[index].is_read = data.is_read ?? true;
-        writeDB(db);
-
-        return NextResponse.json({
-            success: true,
-            message: 'Message mis à jour'
-        });
+        await updateMessage(data.id, data.is_read ?? true);
+        return NextResponse.json({ success: true, message: 'Message mis à jour' });
     } catch (error) {
+        console.error('Message update error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -68,20 +44,12 @@ export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const id = parseInt(searchParams.get('id') || '0');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        if (!id) {
-            return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        }
-
-        const db = readDB();
-        db.messages = db.messages.filter((m: any) => m.id !== id);
-        writeDB(db);
-
-        return NextResponse.json({
-            success: true,
-            message: 'Message supprimé'
-        });
+        await deleteMessage(id);
+        return NextResponse.json({ success: true, message: 'Message supprimé' });
     } catch (error) {
+        console.error('Message delete error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
